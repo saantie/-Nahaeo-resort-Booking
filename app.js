@@ -521,11 +521,45 @@ function buildBookingTable(sheetData, page = 1) {
             
             if (cellBookings.length > 0) {
                 let cellContent = '';
+                
+                // Group by customer to avoid showing duplicate info
+                const uniqueBookings = new Map();
+                
                 cellBookings.forEach(booking => {
-                    cellContent += '<div class="booking-info">';
-                    if (booking['Customer']) {
-                        cellContent += `<div class="customer-name">👤 ${escapeHtml(String(booking['Customer']))}</div>`;
+                    const key = `${booking['Customer']}_${booking['Phone_no']}_${booking['Date_ck_in']}_${booking['Date_ck_out']}`;
+                    if (!uniqueBookings.has(key)) {
+                        uniqueBookings.set(key, booking);
                     }
+                });
+                
+                uniqueBookings.forEach((booking) => {
+                    // Check how many houses this customer booked on this date range
+                    const housesBooked = [];
+                    SPLIT_COLUMNS.forEach((col, idx) => {
+                        const hasHouse = booking[col] && booking[col] !== '' && booking[col] !== 'undefined' && booking[col] !== 'null';
+                        if (hasHouse && isDateInBooking(date, booking['Date_ck_in'], booking['Date_ck_out'])) {
+                            housesBooked.push(HOUSE_NAMES[idx]);
+                        }
+                    });
+                    
+                    cellContent += '<div class="booking-info">';
+                    
+                    if (booking['Customer']) {
+                        cellContent += `<div class="customer-name">👤 ${escapeHtml(String(booking['Customer']))}`;
+                        
+                        // Show badge if booked multiple houses
+                        if (housesBooked.length > 1) {
+                            cellContent += ` <span style="background: #fbbf24; color: #78350f; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-left: 4px;">จอง ${housesBooked.length} หลัง</span>`;
+                        }
+                        
+                        cellContent += `</div>`;
+                        
+                        // Show list of houses if more than 1
+                        if (housesBooked.length > 1) {
+                            cellContent += `<div style="font-size: 11px; color: #059669; margin-top: 3px; font-weight: 500;">🏠 ${housesBooked.join(', ')}</div>`;
+                        }
+                    }
+                    
                     if (booking['Phone_no']) {
                         cellContent += `<div class="phone">📱 ${escapeHtml(String(booking['Phone_no']))}</div>`;
                     }
@@ -540,6 +574,7 @@ function buildBookingTable(sheetData, page = 1) {
                     }
                     cellContent += '</div>';
                 });
+                
                 row += `<td class="booking-cell">${cellContent}</td>`;
             } else {
                 row += '<td class="empty-cell">-</td>';
