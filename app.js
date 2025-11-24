@@ -1,7 +1,7 @@
 // Configuration
 const SHEET_ID = '1IshovQni9Eiq9IeRdDg_2cXTSSkC7YIK2fbDTm_dcs0';
 const SHEET_NAME = 'booking';
-const WEB_APP_URL = 'YOUR_WEB_APP_URL_HERE'; // ใส่ URL จาก Google Apps Script ที่นี่
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx5iJLg00GdREQKSk9FpxBeqz6dyiTOgLLBK36_YuAhKEZsQDXGosVLMeR_RyULABvOlg/exec'; // ใส่ URL จาก Google Apps Script ที่นี่
 
 // ⚠️ สำคัญ: ถ้าคุณได้ Deploy Google Apps Script แล้ว
 // แทนที่ YOUR_WEB_APP_URL_HERE ด้วย URL ที่ได้จาก Deploy
@@ -97,85 +97,57 @@ function formatDateThai(date) {
 
 // Fetch data from Google Sheets
 async function fetchSheetData() {
-    try {
-        // Method 1: Try Web App URL first (recommended - แก้ปัญหา CORS)
-        if (WEB_APP_URL && WEB_APP_URL !== 'YOUR_WEB_APP_URL_HERE') {
-            console.log('🚀 Method 1: Fetching from Google Apps Script Web App...');
-            console.log('URL:', WEB_APP_URL);
-            
-            try {
-                const response = await fetch(WEB_APP_URL, {
-                    method: 'GET',
-                    cache: 'no-cache'
-                });
-                
-                console.log('Response status:', response.status);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP Error ${response.status}`);
-                }
-                
-                const jsonData = await response.json();
-                console.log('✅ JSON data loaded successfully!');
-                console.log('Data rows:', jsonData.data ? jsonData.data.length : 0);
-                
-                if (!jsonData.success) {
-                    throw new Error(jsonData.error || 'Failed to fetch data from Web App');
-                }
-                
-                return {
-                    headers: jsonData.headers,
-                    data: jsonData.data.map(row => {
-                        // Convert to string values
-                        const obj = {};
-                        Object.keys(row).forEach(key => {
-                            obj[key] = row[key] !== null && row[key] !== undefined ? String(row[key]) : '';
-                        });
-                        return obj;
-                    })
-                };
-            } catch (webAppError) {
-                console.error('❌ Web App method failed:', webAppError);
-                console.log('⚠️ Falling back to CSV method...');
-                // Fall through to CSV method
-            }
-        } else {
-            console.log('⚠️ WEB_APP_URL not configured, using CSV method');
-        }
-        
-        // Method 2: Fallback to CSV export (มีปัญหา CORS บางครั้ง)
-        console.log('📥 Method 2: Trying CSV export...');
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}`;
-        
-        console.log('CSV URL:', csvUrl);
-        
-        const response = await fetch(csvUrl, {
-            method: 'GET',
-            mode: 'cors',
-            cache: 'no-cache'
-        });
-        
-        console.log('Response status:', response.status);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP Error ${response.status}: ไม่สามารถเชื่อมต่อ Google Sheet ได้\n\n💡 แนะนำ: ใช้ Google Apps Script แทนเพื่อแก้ปัญหา CORS\nดูวิธีติดตั้งที่ SETUP_APPS_SCRIPT.md`);
-        }
-        
-        const csvText = await response.text();
-        console.log('CSV length:', csvText.length);
-        
-        if (!csvText || csvText.length < 10) {
-            throw new Error('ไม่มีข้อมูลใน Google Sheet หรือ Sheet ไม่เป็น Public\n\n💡 วิธีแก้:\n1. ตรวจสอบว่า Google Sheet เป็น Public\n2. หรือใช้ Google Apps Script (แนะนำ)');
-        }
-        
-        console.log('✅ CSV loaded successfully!');
-        return parseCSV(csvText);
-        
-    } catch (error) {
-        console.error('❌ Error fetching data:', error);
-        throw error;
-    }
-}
+       try {
+           // Method 1: Try Web App URL first (recommended)
+           if (WEB_APP_URL && WEB_APP_URL !== 'YOUR_WEB_APP_URL_HERE') {
+               console.log('Fetching from Web App:', WEB_APP_URL);
+               
+               const response = await fetch(WEB_APP_URL, {
+                   method: 'GET',
+                   cache: 'no-cache'
+               });
+               
+               console.log('Response status:', response.status);
+               
+               if (!response.ok) {
+                   throw new Error(`HTTP Error ${response.status}`);
+               }
+               
+               const jsonData = await response.json();
+               console.log('JSON data loaded:', jsonData);
+               
+               if (!jsonData.success) {
+                   throw new Error(jsonData.error || 'Failed to fetch data from Web App');
+               }
+               
+               return {
+                   headers: jsonData.headers,
+                   data: jsonData.data
+               };
+           }
+           
+           // Method 2: Fallback to CSV export
+           console.log('Trying CSV export method...');
+           const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}`;
+           
+           const response = await fetch(csvUrl, {
+               method: 'GET',
+               mode: 'cors',
+               cache: 'no-cache'
+           });
+           
+           if (!response.ok) {
+               throw new Error('ไม่สามารถเชื่อมต่อ Google Sheet ได้ กรุณาใช้ Google Apps Script แทน');
+           }
+           
+           const csvText = await response.text();
+           return parseCSV(csvText);
+           
+       } catch (error) {
+           console.error('Error fetching data:', error);
+           throw error;
+       }
+   }
 
 // Parse CSV data
 function parseCSV(csv) {
