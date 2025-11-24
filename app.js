@@ -297,7 +297,7 @@ function buildBookingTable(sheetData) {
     console.log('Date range:', dates.length, 'days');
     
     // Limit to 90 days for performance
-    const maxDays = 90;
+    const maxDays = 150;
     if (dates.length > maxDays) {
         console.log(`⚠️ Limiting display to ${maxDays} days for performance`);
         dates.length = maxDays;
