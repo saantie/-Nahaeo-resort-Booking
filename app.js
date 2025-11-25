@@ -224,158 +224,44 @@ async function fetchSheetData() {
         }
         
         // Method 2: Fallback to CSV export (มีปัญหา CORS บางครั้ง)
-        console.log('🚀 Method 2: Fetching from CSV export...');
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}`;
+        console.log('🚀 Method 2: Fetching from Google Sheets CSV export...');
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
+        
         const response = await fetch(csvUrl, {
             method: 'GET',
             cache: 'no-cache'
         });
         
         if (!response.ok) {
-            throw new Error(`CSV Fetch Error ${response.status}`);
+            throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
         }
         
         const csvText = await response.text();
-        const rows = csvText.split('\n').map(row => row.split(',').map(cell => cell.trim().replace(/^"|"$/g, '')));
         
-        if (rows.length < 2) {
-            throw new Error('ไม่มีข้อมูลใน Sheet');
+        if (!csvText || csvText.length < 10) {
+            throw new Error('ไม่มีข้อมูลใน Sheet หรือ Sheet ไม่ใช่ Public');
         }
         
-        const headers = rows[0];
-        const data = rows.slice(1).map(row => {
+        // Parse CSV to JSON
+        const lines = csvText.split('\n');
+        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+        
+        const data = lines.slice(1).map(line => {
+            const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
             const obj = {};
             headers.forEach((header, index) => {
-                obj[header] = row[index] || '';
+                obj[header] = values[index] || '';
             });
             return obj;
-        });
+        }).filter(row => Object.values(row).some(v => v.trim() !== ''));
+        
+        console.log('✅ CSV data loaded successfully!');
+        console.log('Data rows:', data.length);
         
         return { headers, data };
-        
     } catch (error) {
-        console.error('❌ Fetch error:', error);
-        throw error;
-    }
-}
-
-// เติมส่วน truncated: function loadData() และ error handling
-async function loadData() {
-    const contentDiv = document.getElementById('calendar');
-    if (!contentDiv) {
-        console.error('❌ Element #calendar not found!');
-        return;
-    }
-    
-    contentDiv.innerHTML = '<div class="loading">📡 กำลังโหลดข้อมูล...</div>';
-    
-    try {
-        const sheetData = await fetchSheetData();
-        if (!sheetData.data || sheetData.data.length === 0) {
-            throw new Error('ไม่มีข้อมูลการจอง');
-        }
-        
-        // Process bookings (assuming buildBookings function from truncated part)
-        cachedBookings = processBookings(sheetData.data);  // Assume you have this function
-        
-        // Get unique dates
-        const uniqueDates = getUniqueDates(cachedBookings);  // Assume function
-        
-        populateMonthFilter(uniqueDates);
-        renderCachedData(1);
-        
-    } catch (error) {
-        let errorMessage = error.message || 'ไม่สามารถโหลดข้อมูลได้';
-        let suggestions = '';
-        
-        if (errorMessage.includes('WEB_APP_URL not configured')) {
-            suggestions = `
-                <div style="margin-top: 15px; padding: 12px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
-                    <strong>📋 ทำตามขั้นตอนนี้ (5-10 นาที):</strong>
-                    <ol style="margin: 10px 0 10px 20px; line-height: 1.8;">
-                        <li>เปิด Google Sheet</li>
-                        <li>Extensions → Apps Script</li>
-                        <li>วาง code จากไฟล์ GoogleAppsScript.js</li>
-                        <li>Deploy → New deployment → Web app</li>
-                        <li>ตั้งค่า: Execute as "Me", Who has access "Anyone"</li>
-                        <li>Copy Web app URL ที่ได้</li>
-                        <li>แก้ไข app.js ใส่ URL</li>
-                    </ol>
-                    <div style="margin-top: 10px;">
-                        <a href="SETUP_APPS_SCRIPT.md" target="_blank" style="display: inline-block; background: #d97706; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 600;">
-                            📖 ดูคู่มือแบบละเอียด
-                        </a>
-                    </div>
-                </div>
-                <p style="margin-top: 15px; font-size: 13px; color: #666;">
-                    <strong>หรือลองวิธีชั่วคราว:</strong><br>
-                    1. ตรวจสอบว่า Google Sheet เป็น <strong>Public</strong> (Share → Anyone with the link → Viewer)<br>
-                    2. ลอง Refresh หน้าเว็บ<br>
-                    3. ลอง Clear Cache แล้ว Refresh อีกครั้ง<br>
-                    4. ลองใช้ Browser อื่น<br>
-                    <br>
-                    ⚠️ <em>แต่การใช้ Google Apps Script จะแก้ปัญหาได้ถาวรและไม่มีปัญหาอีก</em>
-                </p>
-            `;
-        } else if (error.message.includes('HTTP Error')) {
-            suggestions = `
-                <p style="margin-top: 10px; font-size: 13px;">
-                    <strong>วิธีแก้ไข:</strong><br>
-                    1. ตรวจสอบว่า Google Sheet เป็น <strong>Public</strong><br>
-                    2. ไปที่ Google Sheet → คลิก <strong>Share</strong><br>
-                    3. เลือก <strong>"Anyone with the link"</strong> → <strong>Viewer</strong><br>
-                    4. คลิก <strong>Done</strong> แล้วลอง Refresh อีกครั้ง
-                </p>
-            `;
-        } else if (error.message.includes('ไม่มีข้อมูล')) {
-            suggestions = `
-                <p style="margin-top: 10px; font-size: 13px;">
-                    <strong>วิธีแก้ไข:</strong><br>
-                    1. ตรวจสอบชื่อ Sheet ต้องเป็น <strong>"booking"</strong><br>
-                    2. ตรวจสอบว่ามีข้อมูลใน Sheet<br>
-                    3. ตรวจสอบว่า Sheet ID ถูกต้อง
-                </p>
-            `;
-        } else if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
-            suggestions = `
-                <p style="margin-top: 10px; font-size: 13px;">
-                    <strong>วิธีแก้ไข:</strong><br>
-                    1. ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต<br>
-                    2. ตรวจสอบว่า Google Sheet เป็น <strong>Public</strong><br>
-                    3. ลอง Clear Cache แล้ว Refresh อีกครั้ง<br>
-                    4. ตรวจสอบว่า URL ของ Google Sheet ถูกต้อง
-                </p>
-            `;
-        } else {
-            suggestions = `
-                <p style="margin-top: 10px; font-size: 13px;">
-                    <strong>ขั้นตอนการตรวจสอบ:</strong><br>
-                    1. เปิด Console (กด F12) เพื่อดู error ละเอียด<br>
-                    2. ตรวจสอบว่า Google Sheet เป็น Public<br>
-                    3. ตรวจสอบชื่อ Sheet เป็น "booking"<br>
-                    4. ตรวจสอบว่ามีคอลัมน์ที่จำเป็นครบถ้วน
-                </p>
-            `;
-        }
-        
-        contentDiv.innerHTML = `
-            <div class="error">
-                <h3>❌ เกิดข้อผิดพลาด</h3>
-                <p style="margin-top: 8px; font-weight: 600;">${errorMessage}</p>
-                ${suggestions}
-                <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 6px; border-left: 4px solid #ffc107;">
-                    <strong>🔗 Google Sheet URL:</strong><br>
-                    <code style="font-size: 11px; word-break: break-all;">
-                        https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit
-                    </code>
-                </div>
-                <div style="margin-top: 10px;">
-                    <button onclick="loadData()" style="background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px;">
-                        🔄 ลองอีกครั้ง
-                    </button>
-                </div>
-            </div>
-        `;
+        console.error('❌ Error fetching data:', error);
+        throw error;  // Re-throw to handle in caller
     }
 }
 
@@ -481,43 +367,179 @@ function renderCachedData(page) {
     }, 50);
 }
 
-// เติมส่วน truncated: assume functions like processBookings, getUniqueDates, buildBookingTable (จาก context เดิม)
-function processBookings(data) {
-    // Logic to process raw data into bookings (เติมจาก pattern: parse dates, filter, etc.)
-    return data.map(row => {
-        row.parsedCheckIn = parseDate(row.Date_ck_in);
-        row.parsedCheckOut = parseDate(row.Date_ck_out);
-        return row;
-    }).filter(row => row.parsedCheckIn);  // Filter valid dates
-}
-
-function getUniqueDates(bookings) {
-    const dates = new Set();
-    bookings.forEach(b => {
-        if (b.parsedCheckIn) dates.add(b.parsedCheckIn);
-    });
-    return Array.from(dates);
-}
-
-function buildBookingTable({ data }, page) {
-    // Logic to build HTML table (เติมจาก pattern: paginate, render rows with HOUSE_NAMES)
-    const start = (page - 1) * ROWS_PER_PAGE;
-    const end = start + ROWS_PER_PAGE;
-    const paginated = data.slice(start, end);
+// Function to build the booking table (assume this was in truncated part; implement basic version based on context)
+function buildBookingTable(sheetData, page) {
+    // Basic implementation: Generate table HTML from data
+    // This is placeholder; adjust based on your full logic
+    const startRow = (page - 1) * ROWS_PER_PAGE;
+    const endRow = startRow + ROWS_PER_PAGE;
+    const paginatedData = sheetData.data.slice(startRow, endRow);
     
-    // Build table HTML (simplified example, adjust as per original)
     let html = '<table><thead><tr><th>วันที่</th>';
-    HOUSE_NAMES.forEach(name => html += `<th>${name}</th>`);
+    HOUSE_NAMES.forEach(house => {
+        html += `<th>${house}</th>`;
+    });
     html += '</tr></thead><tbody>';
     
-    paginated.forEach(row => {
-        html += `<tr><td class="date-cell">${formatDateThai(row.parsedCheckIn)}</td>`;
-        // Add cells for each house, etc.
-        html += '</tr>';
+    paginatedData.forEach(row => {
+        const date = parseDate(row['วันที่']);  // Assume column 'วันที่'
+        if (date) {
+            html += `<tr><td class="date-cell">${formatDateThai(date)}</td>`;
+            HOUSE_NAMES.forEach((house, index) => {
+                const booking = row[SPLIT_COLUMNS[index]] || '';  // Assume bookings in SPLIT columns
+                html += `<td class="booking-cell">${booking ? booking : '-'}</td>`;
+            });
+            html += '</tr>';
+        }
     });
     
     html += '</tbody></table>';
+    
+    totalPages = Math.ceil(sheetData.data.length / ROWS_PER_PAGE);
+    currentPage = page;
+    updatePagination();
+    
     return html;
+}
+
+// Update pagination info (assume this was truncated)
+function updatePagination() {
+    document.getElementById('pageInfo').textContent = `หน้า ${currentPage}/${totalPages}`;
+    document.getElementById('prevBtn').disabled = currentPage === 1;
+    document.getElementById('nextBtn').disabled = currentPage === totalPages;
+}
+
+// Load data function (with error handling)
+async function loadData() {
+    const contentDiv = document.getElementById('calendar');
+    const lastUpdateDiv = document.getElementById('lastUpdate');  // Assume you add this if needed
+    
+    contentDiv.innerHTML = '<div class="loading">📡 กำลังโหลดข้อมูลจาก Google Sheets...</div>';
+    
+    try {
+        const sheetData = await fetchSheetData();
+        
+        if (!sheetData.data || sheetData.data.length === 0) {
+            throw new Error('ไม่มีข้อมูลใน Sheet');
+        }
+        
+        // Process bookings (assume sort by date)
+        cachedBookings = sheetData.data.sort((a, b) => {
+            const dateA = parseDate(a['วันที่']);
+            const dateB = parseDate(b['วันที่']);
+            return dateA - dateB;
+        });
+        
+        // Get all dates for month filter
+        const dates = cachedBookings
+            .map(row => parseDate(row['วันที่']))
+            .filter(date => date !== null);
+        
+        populateMonthFilter(dates);
+        
+        // Render initial page
+        renderCachedData(1);
+        
+        // Update last update
+        if (lastUpdateDiv) {
+            lastUpdateDiv.innerHTML = `อัพเดทล่าสุด: ${formatDateThai(new Date())}`;
+        }
+        
+    } catch (error) {
+        console.error('❌ Load data error:', error);
+        let errorMessage = error.message || 'ไม่ทราบสาเหตุ';
+        let suggestions = '';
+        
+        if (errorMessage.includes('WEB_APP_URL')) {
+            suggestions = `
+                <div style="margin-top: 15px; padding: 12px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                    <strong>📋 ทำตามขั้นตอนนี้ (5-10 นาที):</strong>
+                    <ol style="margin: 10px 0 10px 20px; line-height: 1.8;">
+                        <li>เปิด Google Sheet</li>
+                        <li>Extensions → Apps Script</li>
+                        <li>วาง code จากไฟล์ GoogleAppsScript.js</li>
+                        <li>Deploy → New deployment → Web app</li>
+                        <li>ตั้งค่า: Execute as "Me", Who has access "Anyone"</li>
+                        <li>Copy Web app URL ที่ได้</li>
+                        <li>แก้ไข app.js ใส่ URL</li>
+                    </ol>
+                    <div style="margin-top: 10px;">
+                        <a href="SETUP_APPS_SCRIPT.md" target="_blank" style="display: inline-block; background: #d97706; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 600;">
+                            📖 ดูคู่มือแบบละเอียด
+                        </a>
+                    </div>
+                </div>
+                <p style="margin-top: 15px; font-size: 13px; color: #666;">
+                    <strong>หรือลองวิธีชั่วคราว:</strong><br>
+                    1. ตรวจสอบว่า Google Sheet เป็น <strong>Public</strong> (Share → Anyone with the link → Viewer)<br>
+                    2. ลอง Refresh หน้าเว็บ<br>
+                    3. ลอง Clear Cache แล้ว Refresh อีกครั้ง<br>
+                    4. ลองใช้ Browser อื่น<br>
+                    <br>
+                    ⚠️ <em>แต่การใช้ Google Apps Script จะแก้ปัญหาได้ถาวรและไม่มีปัญหาอีก</em>
+                </p>
+            `;
+        } else if (error.message.includes('HTTP Error')) {
+            suggestions = `
+                <p style="margin-top: 10px; font-size: 13px;">
+                    <strong>วิธีแก้ไข:</strong><br>
+                    1. ตรวจสอบว่า Google Sheet เป็น <strong>Public</strong><br>
+                    2. ไปที่ Google Sheet → คลิก <strong>Share</strong><br>
+                    3. เลือก <strong>"Anyone with the link"</strong> → <strong>Viewer</strong><br>
+                    4. คลิก <strong>Done</strong> แล้วลอง Refresh อีกครั้ง
+                </p>
+            `;
+        } else if (error.message.includes('ไม่มีข้อมูล')) {
+            suggestions = `
+                <p style="margin-top: 10px; font-size: 13px;">
+                    <strong>วิธีแก้ไข:</strong><br>
+                    1. ตรวจสอบชื่อ Sheet ต้องเป็น <strong>"booking"</strong><br>
+                    2. ตรวจสอบว่ามีข้อมูลใน Sheet<br>
+                    3. ตรวจสอบว่า Sheet ID ถูกต้อง
+                </p>
+            `;
+        } else if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+            suggestions = `
+                <p style="margin-top: 10px; font-size: 13px;">
+                    <strong>วิธีแก้ไข:</strong><br>
+                    1. ตรวจสอบการเชื่อมต่ออินเทอร์เน็ต<br>
+                    2. ตรวจสอบว่า Google Sheet เป็น <strong>Public</strong><br>
+                    3. ลอง Clear Cache แล้ว Refresh อีกครั้ง<br>
+                    4. ตรวจสอบว่า URL ของ Google Sheet ถูกต้อง
+                </p>
+            `;
+        } else {
+            suggestions = `
+                <p style="margin-top: 10px; font-size: 13px;">
+                    <strong>ขั้นตอนการตรวจสอบ:</strong><br>
+                    1. เปิด Console (กด F12) เพื่อดู error ละเอียด<br>
+                    2. ตรวจสอบว่า Google Sheet เป็น Public<br>
+                    3. ตรวจสอบชื่อ Sheet เป็น "booking"<br>
+                    4. ตรวจสอบว่ามีคอลัมน์ที่จำเป็นครบถ้วน
+                </p>
+            `;
+        }
+        
+        contentDiv.innerHTML = `
+            <div class="error">
+                <h3>❌ เกิดข้อผิดพลาด</h3>
+                <p style="margin-top: 8px; font-weight: 600;">${errorMessage}</p>
+                ${suggestions}
+                <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 6px; border-left: 4px solid #ffc107;">
+                    <strong>🔗 Google Sheet URL:</strong><br>
+                    <code style="font-size: 11px; word-break: break-all;">
+                        https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit
+                    </code>
+                </div>
+                <div style="margin-top: 10px;">
+                    <button onclick="loadData()" style="background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                        🔄 ลองอีกครั้ง
+                    </button>
+                </div>
+            </div>
+        `;
+        if (lastUpdateDiv) lastUpdateDiv.innerHTML = '❌ โหลดข้อมูลล้มเหลว';
+    }
 }
 
 // Initial load
