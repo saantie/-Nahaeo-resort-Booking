@@ -1,4 +1,4 @@
-const CACHE_NAME = 'resort-booking-v2';
+const CACHE_NAME = 'resort-booking-v3';  // เปลี่ยน version เพื่อ force update cache
 const BASE_PATH = '/Nahaeo-resort-Booking/';
 
 // Files to cache (using relative paths)
@@ -59,6 +59,25 @@ self.addEventListener('fetch', event => {
   
   // Skip cross-origin requests
   if (url.origin !== location.origin && !url.origin.includes('script.google.com')) {
+    return;
+  }
+
+  // Handle navigation requests (SPA fallback to index.html)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // If 404 from server, fallback to index.html
+          if (response.status === 404) {
+            return caches.match(BASE_PATH + 'index.html');
+          }
+          return response;
+        })
+        .catch(() => {
+          // Offline or fail, fallback to cached index.html
+          return caches.match(BASE_PATH + 'index.html');
+        })
+    );
     return;
   }
 
@@ -129,7 +148,7 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Activate event - clean old caches
+// Activate event - clean old caches (ซ้ำแต่เก็บไว้ให้ครบ)
 self.addEventListener('activate', event => {
   const cacheWhitelist = [CACHE_NAME];
   
