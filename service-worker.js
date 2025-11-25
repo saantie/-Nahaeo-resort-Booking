@@ -3,12 +3,12 @@ const BASE_PATH = '/Nahaeo-resort-Booking/';
 
 // Files to cache (using relative paths)
 const urlsToCache = [
-  BASE_PATH,
-  BASE_PATH + 'index.html',
-  BASE_PATH + 'app.js',
-  BASE_PATH + 'manifest.json',
-  BASE_PATH + 'icon-192.png',
-  BASE_PATH + 'icon-512.png'
+  '/',
+  'index.html',
+  'app.js',
+  'manifest.json',
+  'icon-192.png',
+  'icon-512.png'
 ];
 
 // Install event - cache essential files
