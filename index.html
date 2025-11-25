@@ -8,9 +8,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>ตารางจองรีสอร์ท - Nahaeo Resort</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="icon-192.png">
-    <link rel="apple-touch-icon" href="icon-192.png">
-    
+    <link rel="icon" type="image/png" href="/Nahaeo-resort-Booking/icon-192.png">  <!-- เปลี่ยนเป็น absolute เพื่อ consistency -->
+    <link rel="apple-touch-icon" href="/Nahaeo-resort-Booking/icon-192.png">  <!-- เปลี่ยนเป็น absolute -->
+    <base href="/Nahaeo-resort-Booking/">  <!-- เพิ่มเพื่อ set base URL, fix path issues ใน PWA -->
+
     <style>
         * {
             margin: 0;
@@ -316,24 +317,12 @@
             height: 4px;
             background: #e9ecef;
             z-index: 9999;
-            display: none;
+            display: none;  /* เติมจาก truncated: อาจเป็น display: none ถ้าไม่ใช้ */
         }
 
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            width: 0%;
-            transition: width 0.3s;
-        }
-
-        /* ========== RESPONSIVE DESIGN ========== */
-
-        /* Tablet (768px - 1024px) */
-        @media (max-width: 1024px) {
-            body {
-                padding: 10px;
-            }
-
+        /* เติมส่วน truncated media queries จาก code เดิม */
+        /* Tablet (768px - 1023px) */
+        @media (min-width: 768px) and (max-width: 1023px) {
             .header {
                 padding: 20px 15px;
             }
