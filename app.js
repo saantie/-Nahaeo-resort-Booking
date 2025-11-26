@@ -169,10 +169,7 @@ function parseDate(dateStr) {
 // Format date to Thai format
 function formatDateThai(date) {
     const days = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
-    const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 
-                    'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-    
-    return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear() + 543}`;
+    return `${days[date.getDay()]} ${date.getDate()}`;
 }
 
 // Fetch data from Google Sheets
