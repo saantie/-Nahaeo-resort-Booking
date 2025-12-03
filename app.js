@@ -1304,4 +1304,4 @@ setTimeout(() => {
 }, 2000);
 
 // Refresh charts ทุก 10 นาที
-setInterval(loadCharts, 10 * 60 * 1000);
+setInterval(loadCharts, 30 * 60 * 1000);
