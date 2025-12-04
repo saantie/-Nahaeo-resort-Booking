@@ -1,7 +1,7 @@
 // Configuration
 const SHEET_ID = '1IshovQni9Eiq9IeRdDg_2cXTSSkC7YIK2fbDTm_dcs0';
 const SHEET_NAME = 'booking';
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx3rziuQAKv-UmqRnY7Clu61Vv7cpGWhnjbZL7ru0Zd9Fc_OlVIfYKRTIf1ahbKWq3ctA/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycby0F2uWTTm4S-zmrBzVdvPsgcvZTj5PpMD1XboPNH7_ULo8Ii5xRvGhFgtfEeVxyih5BA/exec';
 
 // ✅ Google Apps Script Web App URL ได้ถูกตั้งค่าแล้ว
 // เว็บจะใช้วิธีนี้ในการดึงข้อมูล (แก้ปัญหา CORS แล้ว)
