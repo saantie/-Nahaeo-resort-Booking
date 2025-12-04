@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Charts - Simple</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .chart-box {
+            margin: 30px 0;
+            padding: 20px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+        }
+        canvas {
+            max-width: 100%;
+            height: 300px !important;
+        }
+        .status {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Charts - Simple</h1>
+        
+        <div id="status" class="status loading">⏳ กำลังโหลด...</div>
+        
+        <div class="chart-box">
+            <h2>Chart 1: รายได้รายเดือน</h2>
+            <canvas id="chart1"></canvas>
+        </div>
+        
+        <div class="chart-box">
+            <h2>Chart 2: เปรียบเทียบรายได้รายปี</h2>
+            <canvas id="chart2"></canvas>
+        </div>
+        
+        <div class="chart-box">
+            <h2>Chart 3: จำนวนการจองแยกรายบ้าน</h2>
+            <canvas id="chart3"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // ใส่ URL ตรงๆ เลย
+        const API_URL = 'https://script.google.com/macros/s/AKfycby0F2uWTTm4S-zmrBzVdvPsgcvZTj5PpMD1XboPNH7_ULo8Ii5xRvGhFgtfEeVxyih5BA/exec';
+        
+        const statusEl = document.getElementById('status');
+        
+        async function loadCharts() {
+            try {
+                console.log('Starting...');
+                statusEl.textContent = '⏳ กำลังโหลดข้อมูล...';
+                
+                // ดึงข้อมูลรายได้
+                console.log('Fetching revenue...');
+                const revenueRes = await fetch(`${API_URL}?action=revenue`);
+                const revenueData = await revenueRes.json();
+                console.log('Revenue:', revenueData);
+                
+                // ดึงข้อมูลการจอง
+                console.log('Fetching booking count...');
+                const bookingRes = await fetch(`${API_URL}?action=bookingcount`);
+                const bookingData = await bookingRes.json();
+                console.log('Booking:', bookingData);
+                
+                if (!revenueData.success || !bookingData.success) {
+                    throw new Error('API failed');
+                }
+                
+                // สร้าง Chart 1
+                createChart1(revenueData.data);
+                
+                // สร้าง Chart 2
+                createChart2(revenueData.data);
+                
+                // สร้าง Chart 3
+                createChart3(bookingData.data);
+                
+                statusEl.textContent = '✅ โหลดสำเร็จ!';
+                statusEl.className = 'status success';
+                console.log('Done!');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                statusEl.textContent = '❌ เกิดข้อผิดพลาด: ' + error.message;
+                statusEl.className = 'status error';
+            }
+        }
+        
+        function createChart1(data) {
+            const monthNames = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 
+                               'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            
+            // หาปีล่าสุดที่มีข้อมูล
+            let latestYear = 0;
+            let latestYearData = null;
+            
+            for (let row of data) {
+                const year = parseInt(row.year || 0);
+                const total = parseFloat(row['รวม'] || 0);
+                
+                if (year > latestYear && total > 0) {
+                    latestYear = year;
+                    latestYearData = row;
+                }
+            }
+            
+            const monthlyData = [];
+            for (let month of monthNames) {
+                monthlyData.push(latestYearData[month] || 0);
+            }
+            
+            const ctx = document.getElementById('chart1');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: monthNames,
+                    datasets: [{
+                        label: `รายได้ปี ${latestYear}`,
+                        data: monthlyData,
+                        backgroundColor: '#f1c40f',
+                        borderColor: '#f39c12',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString() + ' บาท';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createChart2(data) {
+            const yearsData = [];
+            
+            for (let row of data) {
+                const year = parseInt(row.year || 0);
+                const total = parseFloat(row['รวม'] || 0);
+                
+                if (year > 0 && total > 0) {
+                    yearsData.push({ year, total });
+                }
+            }
+            
+            yearsData.sort((a, b) => b.year - a.year);
+            const topYears = yearsData.slice(0, 5).reverse();
+            
+            const labels = topYears.map(d => `ปี ${d.year}`);
+            const values = topYears.map(d => d.total);
+            
+            const ctx = document.getElementById('chart2');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'รายได้รายปี',
+                        data: values,
+                        borderColor: '#2ecc71',
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString() + ' บาท';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createChart3(data) {
+            const row = data[0];
+            const labels = [];
+            const values = [];
+            
+            for (let key in row) {
+                labels.push(key);
+                values.push(row[key] || 0);
+            }
+            
+            const ctx = document.getElementById('chart3');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'จำนวนการจอง',
+                        data: values,
+                        backgroundColor: [
+                            '#3498db', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c',
+                            '#34495e', '#e67e22', '#95a5a6', '#16a085', '#27ae60',
+                            '#2980b9', '#8e44ad', '#c0392b', '#d35400', '#7f8c8d'
+                        ]
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // โหลดทันที
+        loadCharts();
+    </script>
+</body>
+</html>
