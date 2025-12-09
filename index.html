@@ -6,7 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>ตารางจองนาแห้วรีสอร์ท - Nahaeo Resort</title>
+    <title>ตารางจองรีสอร์ท - Nahaeo Resort</title>
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icon-192.png">
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -20,7 +20,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #EBF0F5 0%, #E6E8E8 100%);
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             padding: 15px;
             min-height: 100vh;
         }
@@ -28,14 +28,14 @@
         .container {
             max-width: 100%;
             margin: 0 auto;
-            background: linear-gradient(135deg, #1C2E29 0%, #1E3D33 100%);
+            background: white;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             overflow: hidden;
         }
 
         .header {
-            background: linear-gradient(135deg, #1C2E29 0%, #1E3D33 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 25px 15px;
             text-align: center;
@@ -54,7 +54,7 @@
 
         .controls {
             padding: 15px;
-            background: #FFB300;
+            background: #f8f9fa;
             border-bottom: 2px solid #e9ecef;
             display: flex;
             justify-content: space-between;
@@ -112,7 +112,7 @@
 
         .nav-btn {
             padding: 10px 16px;
-            background: #1E2927;
+            background: #667eea;
             color: white;
             border: none;
             border-radius: 8px;
@@ -161,16 +161,16 @@
             position: sticky;
             top: 0;
             z-index: 10;
-            background: linear-gradient(135deg, #FFB300 0%, #FFA100 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
         th {
             padding: clamp(4px, 0.8vw, 6px) clamp(3px, 0.6vw, 4px);
-            text-align: center;
-            color: #1E3D33;
+            text-align: left;
+            color: white;
             font-weight: 800;
-            font-size: clamp(14px, 1.4vw, 18px);
+            font-size: clamp(9px, 1.4vw, 11px);
             white-space: nowrap;
             border-bottom: 3px solid rgba(255,255,255,0.3);
             text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
@@ -180,7 +180,7 @@
             position: sticky;
             left: 0;
             z-index: 11;
-            background: linear-gradient(135deg, #FFB300 0%, #FFA100 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
         /* มุมบนซ้าย */
@@ -202,7 +202,7 @@
             padding: clamp(3px, 0.6vw, 5px) clamp(2px, 0.5vw, 3px);
             border-bottom: 1px solid #e9ecef;
             vertical-align: top;
-            font-size: clamp(32px, 1.3vw, 40px);
+            font-size: clamp(8px, 1.3vw, 10px);
         }
 
         .date-cell {
@@ -210,7 +210,7 @@
             left: 0;
             background: white;
             font-weight: 800;
-            font-size: clamp(24px, 1.4vw, 32px);
+            font-size: clamp(9px, 1.4vw, 11px);
             color: #495057;
             border-right: 3px solid #dee2e6;
             z-index: 5;
@@ -243,7 +243,7 @@
             text-align: center;
             color: #adb5bd;
             font-size: clamp(16px, 3vw, 20px);
-            background: linear-gradient(90deg, #EBF0F5 0%, #E6E8E8 100%);
+            background: #f8f9fa;
         }
 
         tr:hover .date-cell {
@@ -322,7 +322,7 @@
         }
 
         .loading {
-            color: #EBF0F5;
+            color: #667eea;
         }
 
         .error {
@@ -345,7 +345,7 @@
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(135deg, #FFB300 0%, #FFA100 100%);
+            background: linear-gradient(90deg, #667eea, #764ba2);
             width: 0%;
             transition: width 0.3s;
         }
@@ -470,7 +470,7 @@
             }
 
             .date-cell {
-                font-size: 18px;
+                font-size: 15px;
                 font-weight: 800;
                 min-width: 130px;
             }
@@ -505,7 +505,7 @@
             }
 
             .header {
-                padding: 18px 14px;
+                padding: 12px 8px;
             }
 
             h1 {
@@ -556,17 +556,17 @@
 
             /* ปรับขนาดฟอนต์ header ให้เหมาะกับมือถือ */
             th {
-                font-size: 18px;
+                font-size: 14px;
                 font-weight: 800;
-                padding: 18px 14px;
+                padding: 10px 6px;
             }
 
             td {
-                padding: 18px 14px;
+                padding: 8px 4px;
             }
 
             .date-cell {
-                font-size: 18px;
+                font-size: 14px;
                 font-weight: 800;
                 min-width: 110px;
                 padding: 8px 6px;
@@ -626,7 +626,7 @@
             }
 
             th, td {
-                font-size: 14px;
+                font-size: 11px;
                 padding: 6px 3px;
             }
 
@@ -708,7 +708,7 @@
 
     <div class="container">
         <div class="header">
-            <h1>📅 ตารางจองนาแห้วรีสอร์ท</h1>
+            <h1>📅 ตารางจองรีสอร์ท</h1>
             <p class="subtitle">Nahaeo Resort Booking Calendar</p>
         </div>
 
@@ -728,7 +728,7 @@
         </div>
 
         <div id="calendar" class="loading table-container">
-            กำลังโหลดข้อมูล...รอสักครู่จ้า
+            กำลังโหลดข้อมูล...
         </div>
     </div>
 
