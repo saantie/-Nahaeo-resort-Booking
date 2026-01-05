@@ -1432,6 +1432,43 @@ async function loadCharts() {
             console.warn('⚠️ Year filter dropdown not found');
         }
         
+        // Populate year dropdown และ Load Chart 5
+        console.log('💰 Setting up year filter for Chart 5...');
+        const yearFilterRevenue = document.getElementById('yearFilterRevenue');
+        if (yearFilterRevenue) {
+            // สร้างรายการปี (2565-2575)
+            const currentYear = new Date().getFullYear() + 543;
+            const years = [];
+            for (let y = 2565; y <= 2575; y++) {
+                years.push(y);
+            }
+            
+            // เติม options
+            yearFilterRevenue.innerHTML = '';
+            years.forEach(y => {
+                const option = document.createElement('option');
+                option.value = y;
+                option.textContent = `ปี ${y}`;
+                if (y === currentYear) {
+                    option.selected = true;
+                }
+                yearFilterRevenue.appendChild(option);
+            });
+            
+            // โหลด Chart 5 ครั้งแรก
+            await loadRevenueByYearChart(yearFilterRevenue.value);
+            
+            // Event listener สำหรับเปลี่ยนปี
+            yearFilterRevenue.addEventListener('change', async function() {
+                console.log('💰 Revenue year changed to:', this.value);
+                await loadRevenueByYearChart(this.value);
+            });
+            
+            console.log('✅ Revenue year filter setup complete!');
+        } else {
+            console.warn('⚠️ Revenue year filter dropdown not found');
+        }
+        
         console.log('✅✅✅ ALL CHARTS LOADED SUCCESSFULLY! ✅✅✅');
     } catch (error) {
         console.error('❌ Error loading charts:', error);
@@ -1583,6 +1620,158 @@ async function loadBookingCountByYearChart(year) {
         createBookingCountByYearChart(data, year);
     } else {
         wrapper.innerHTML = '<div class="chart-error">⚠️ ไม่พบข้อมูลการจองในปีนี้</div>';
+    }
+}
+
+// ========================================
+// Chart 5: รายได้แต่ละบ้านตามปี
+// ========================================
+
+// ดึงข้อมูลรายได้แต่ละบ้านตามปี
+async function fetchRevenueByYear(year) {
+    console.log(`💰 Fetching revenue by year for ${year}...`);
+    try {
+        const url = `${WEB_APP_URL}?action=revenuebyyear&year=${year}`;
+        console.log('📍 Revenue by Year API URL:', url);
+        
+        const response = await fetch(url);
+        console.log('📡 Revenue by Year API Status:', response.status);
+        
+        const result = await response.json();
+        console.log('📦 Revenue by Year API Result:', result);
+        
+        if (!result.success) {
+            console.error('❌ Error fetching revenue by year:', result.error);
+            return null;
+        }
+        
+        console.log(`✅ Revenue by year loaded: ${result.data.length} rows`);
+        return result.data;
+    } catch (error) {
+        console.error('❌ Error fetching revenue by year:', error);
+        return null;
+    }
+}
+
+// สร้าง Chart 5
+function createRevenueByYearChart(data, year) {
+    console.log('📊 Creating revenue by year chart for year:', year);
+    
+    if (!data || data.length === 0) {
+        console.error('❌ No data for revenue by year chart');
+        return;
+    }
+    
+    const row = data[0];
+    const labels = [];
+    const values = [];
+    const colors = [
+        '#3498db', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c',
+        '#34495e', '#e67e22', '#95a5a6', '#16a085', '#27ae60',
+        '#2980b9', '#8e44ad', '#c0392b', '#d35400', '#7f8c8d'
+    ];
+    
+    for (let key in row) {
+        labels.push(key);
+        values.push(row[key] || 0);
+    }
+    
+    const ctx = document.getElementById('revenueByYearChart');
+    if (!ctx) {
+        console.error('❌ Canvas revenueByYearChart not found');
+        return;
+    }
+    
+    // ทำลาย chart เก่าถ้ามี
+    if (window.revenueByYearChartInstance) {
+        window.revenueByYearChartInstance.destroy();
+    }
+    
+    window.revenueByYearChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: `รายได้ (ปี ${year})`,
+                data: values,
+                backgroundColor: colors,
+                borderColor: colors.map(c => c),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                title: {
+                    display: true,
+                    text: `รายได้แต่ละบ้านในปี ${year}`,
+                    font: {
+                        size: 16,
+                        weight: 'bold'
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed.x;
+                            return `รายได้: ${value.toLocaleString('th-TH')} บาท`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString('th-TH');
+                        }
+                    }
+                },
+                y: {
+                    ticks: {
+                        autoSkip: false,  // แสดงชื่อบ้านครบ
+                        maxRotation: 0,
+                        minRotation: 0,
+                        font: {
+                            size: window.innerWidth < 768 ? 10 : 12
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    console.log('✅ Revenue by year chart created!');
+}
+
+// โหลด Chart 5 ตามปีที่เลือก
+async function loadRevenueByYearChart(year) {
+    console.log(`🔄 Loading revenue by year chart for year ${year}...`);
+    
+    const wrapper = document.querySelectorAll('.chart-wrapper')[4]; // Chart 5
+    if (!wrapper) {
+        console.error('❌ Chart 5 wrapper not found');
+        return;
+    }
+    
+    // แสดง loading
+    wrapper.innerHTML = '<div class="chart-loading">⏳ กำลังโหลดข้อมูล...</div>';
+    
+    // ดึงข้อมูล
+    const data = await fetchRevenueByYear(year);
+    
+    if (data && data.length > 0) {
+        // Restore canvas
+        wrapper.innerHTML = '<canvas id="revenueByYearChart"></canvas>';
+        createRevenueByYearChart(data, year);
+    } else {
+        wrapper.innerHTML = '<div class="chart-error">⚠️ ไม่พบข้อมูลรายได้ในปีนี้</div>';
     }
 }
 
