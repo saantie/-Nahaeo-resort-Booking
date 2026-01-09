@@ -1868,7 +1868,47 @@ function recalculateLayout() {
         tableWrapper.style.display = 'block';
     }
     
-    console.log('✅ Layout recalculated');
+    // ========================================
+    // แก้ปัญหา Charts ยืดแล้วไม่ย่อกลับ
+    // ========================================
+    console.log('📊 Resizing all charts...');
+    
+    // รายการ chart instances ทั้งหมด
+    const chartInstances = [
+        { name: 'Monthly Revenue', instance: window.monthlyRevenueChartInstance },
+        { name: 'Year Comparison', instance: window.yearComparisonChartInstance },
+        { name: 'Booking Count', instance: window.bookingCountChartInstance },
+        { name: 'Booking by Year', instance: window.bookingCountByYearChartInstance },
+        { name: 'Revenue by Year', instance: window.revenueByYearChartInstance }
+    ];
+    
+    let resizedCount = 0;
+    
+    chartInstances.forEach(chart => {
+        if (chart.instance) {
+            try {
+                // Method 1: ใช้ .resize()
+                chart.instance.resize();
+                console.log(`✅ Resized: ${chart.name}`);
+                resizedCount++;
+            } catch (error) {
+                console.warn(`⚠️ Error resizing ${chart.name}:`, error);
+                
+                // Method 2: ถ้า resize ไม่ได้ ให้ใช้ .update()
+                try {
+                    chart.instance.update('none'); // 'none' = no animation
+                    console.log(`✅ Updated: ${chart.name}`);
+                    resizedCount++;
+                } catch (updateError) {
+                    console.error(`❌ Failed to resize/update ${chart.name}:`, updateError);
+                }
+            }
+        } else {
+            console.log(`⚠️ ${chart.name} instance not found`);
+        }
+    });
+    
+    console.log(`✅ Layout recalculated. Charts resized: ${resizedCount}/5`);
 }
 
 // Event listener สำหรับ resize
