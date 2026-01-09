@@ -1846,33 +1846,35 @@ function recalculateLayout() {
     
     // ========================================
     // แก้ปัญหา Container ไม่เต็มหน้าจอ
+    // Method: Force width = 100% หลายรอบ
     // ========================================
     const container = document.querySelector('.container');
     const tableWrapper = document.querySelector('.table-wrapper');
+    const chartsGrid = document.querySelector('.charts-grid');
     
+    // Method 1: Force set width = 100%
     if (container) {
-        // Force reset width to 100%
-        container.style.width = '';
-        container.style.maxWidth = '';
+        container.style.width = '100%';
+        container.style.maxWidth = '100%';
+        container.style.minWidth = '0';
         
-        // Trigger reflow
+        // Force reflow
         const height = container.offsetHeight;
         console.log('Container height:', height);
         
         // Force repaint
-        container.style.display = 'block';
+        container.style.display = 'none';
         container.offsetHeight;
+        container.style.display = 'block';
     }
     
     if (tableWrapper) {
-        // Force reset width to 100%
-        tableWrapper.style.width = '';
-        tableWrapper.style.maxWidth = '';
-        
-        // Reset scroll position
+        tableWrapper.style.width = '100%';
+        tableWrapper.style.maxWidth = '100%';
+        tableWrapper.style.minWidth = '0';
         tableWrapper.scrollLeft = 0;
         
-        // Trigger reflow
+        // Force reflow
         const width = tableWrapper.offsetWidth;
         console.log('Table wrapper width:', width);
         
@@ -1882,47 +1884,65 @@ function recalculateLayout() {
         tableWrapper.style.display = 'block';
     }
     
-    // ========================================
-    // แก้ปัญหา Charts ยืดแล้วไม่ย่อกลับ
-    // ========================================
-    console.log('📊 Resizing all charts...');
+    if (chartsGrid) {
+        chartsGrid.style.width = '100%';
+        chartsGrid.style.maxWidth = '100%';
+    }
     
-    // รายการ chart instances ทั้งหมด
-    const chartInstances = [
-        { name: 'Monthly Revenue', instance: window.monthlyRevenueChartInstance },
-        { name: 'Year Comparison', instance: window.yearComparisonChartInstance },
-        { name: 'Booking Count', instance: window.bookingCountChartInstance },
-        { name: 'Booking by Year', instance: window.bookingCountByYearChartInstance },
-        { name: 'Revenue by Year', instance: window.revenueByYearChartInstance }
-    ];
-    
-    let resizedCount = 0;
-    
-    chartInstances.forEach(chart => {
-        if (chart.instance) {
-            try {
-                // Method 1: ใช้ .resize()
-                chart.instance.resize();
-                console.log(`✅ Resized: ${chart.name}`);
-                resizedCount++;
-            } catch (error) {
-                console.warn(`⚠️ Error resizing ${chart.name}:`, error);
-                
-                // Method 2: ถ้า resize ไม่ได้ ให้ใช้ .update()
-                try {
-                    chart.instance.update('none'); // 'none' = no animation
-                    console.log(`✅ Updated: ${chart.name}`);
-                    resizedCount++;
-                } catch (updateError) {
-                    console.error(`❌ Failed to resize/update ${chart.name}:`, updateError);
-                }
-            }
-        } else {
-            console.log(`⚠️ ${chart.name} instance not found`);
+    // Method 2: Use requestAnimationFrame for stronger reflow
+    requestAnimationFrame(() => {
+        console.log('📐 Recalculating layout in animation frame...');
+        
+        if (container) {
+            container.style.width = '100%';
+            const rect = container.getBoundingClientRect();
+            console.log('Container rect width:', rect.width);
         }
+        
+        if (tableWrapper) {
+            tableWrapper.style.width = '100%';
+            const rect = tableWrapper.getBoundingClientRect();
+            console.log('Table wrapper rect width:', rect.width);
+        }
+        
+        // ========================================
+        // แก้ปัญหา Charts ยืดแล้วไม่ย่อกลับ
+        // ========================================
+        console.log('📊 Resizing all charts...');
+        
+        const chartInstances = [
+            { name: 'Monthly Revenue', instance: window.monthlyRevenueChartInstance },
+            { name: 'Year Comparison', instance: window.yearComparisonChartInstance },
+            { name: 'Booking Count', instance: window.bookingCountChartInstance },
+            { name: 'Booking by Year', instance: window.bookingCountByYearChartInstance },
+            { name: 'Revenue by Year', instance: window.revenueByYearChartInstance }
+        ];
+        
+        let resizedCount = 0;
+        
+        chartInstances.forEach(chart => {
+            if (chart.instance) {
+                try {
+                    chart.instance.resize();
+                    console.log(`✅ Resized: ${chart.name}`);
+                    resizedCount++;
+                } catch (error) {
+                    console.warn(`⚠️ Error resizing ${chart.name}:`, error);
+                    try {
+                        chart.instance.update('none');
+                        console.log(`✅ Updated: ${chart.name}`);
+                        resizedCount++;
+                    } catch (updateError) {
+                        console.error(`❌ Failed: ${chart.name}`);
+                    }
+                }
+            } else {
+                console.log(`⚠️ ${chart.name} instance not found`);
+            }
+        });
+        
+        console.log(`✅ Layout recalculated. Charts resized: ${resizedCount}/5`);
     });
-    
-    console.log(`✅ Layout recalculated. Charts resized: ${resizedCount}/5`);
 }
 
 // Event listener สำหรับ resize
@@ -1941,10 +1961,16 @@ window.addEventListener('resize', () => {
 window.addEventListener('orientationchange', () => {
     console.log('🔄 Orientation changed');
     
-    // รอ animation เสร็จ (500ms) แล้วค่อย recalculate
+    // รอ animation เสร็จ (800ms) แล้วค่อย recalculate
     setTimeout(() => {
         recalculateLayout();
-    }, 500);
+        
+        // เรียกซ้ำอีกครั้งหลัง 500ms เพื่อให้แน่ใจ
+        setTimeout(() => {
+            console.log('🔄 Second recalculation...');
+            recalculateLayout();
+        }, 500);
+    }, 800);
 });
 
 // Event listener สำหรับ viewport size change (iOS Safari)
