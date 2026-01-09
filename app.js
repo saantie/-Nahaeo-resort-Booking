@@ -575,14 +575,15 @@ function buildBookingTable(sheetData, page = 1) {
                               '#059669';
             dateBadge = `
                 <div style="
-                    margin-top: 4px; 
-                    padding: 3px 8px; 
+                    margin-top: 6px; 
+                    padding: 4px 10px; 
                     background: ${badgeColor}; 
                     color: white; 
-                    border-radius: 12px; 
+                    border-radius: 8px; 
                     font-size: 11px; 
                     font-weight: 600;
-                    display: inline-block;
+                    display: block;
+                    text-align: center;
                     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
                 ">
                     มีจอง ${bookedHousesCount} หลัง
@@ -592,7 +593,9 @@ function buildBookingTable(sheetData, page = 1) {
         
         let row = '<tr>';
         row += `<td class="date-cell ${isToday ? 'today-row' : ''}">
-            ${formatDateThai(date)}
+            <div style="text-align: center;">
+                ${formatDateThai(date)}
+            </div>
             ${dateBadge}
         </td>`;
         
@@ -1832,3 +1835,74 @@ setTimeout(() => {
 
 // Refresh charts ทุก 10 นาที
 setInterval(loadCharts, 10 * 60 * 1000);
+
+// ========================================
+// แก้ปัญหาหมุนหน้าจอ - ตารางเล็กลง
+// ========================================
+
+// Function สำหรับ recalculate layout
+function recalculateLayout() {
+    console.log('🔄 Recalculating layout...');
+    
+    // Force reflow
+    const container = document.querySelector('.container');
+    const tableWrapper = document.querySelector('.table-wrapper');
+    
+    if (container) {
+        // Trigger reflow โดยการอ่าน offsetHeight
+        const height = container.offsetHeight;
+        console.log('Container height:', height);
+    }
+    
+    if (tableWrapper) {
+        // Reset scroll position
+        tableWrapper.scrollLeft = 0;
+        
+        // Trigger reflow
+        const width = tableWrapper.offsetWidth;
+        console.log('Table wrapper width:', width);
+        
+        // Force repaint
+        tableWrapper.style.display = 'none';
+        tableWrapper.offsetHeight; // Trigger reflow
+        tableWrapper.style.display = 'block';
+    }
+    
+    console.log('✅ Layout recalculated');
+}
+
+// Event listener สำหรับ resize
+let resizeTimeout;
+window.addEventListener('resize', () => {
+    console.log('📱 Window resized');
+    
+    // Debounce - รอ 300ms หลังจากหยุด resize
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        recalculateLayout();
+    }, 300);
+});
+
+// Event listener สำหรับ orientation change
+window.addEventListener('orientationchange', () => {
+    console.log('🔄 Orientation changed');
+    
+    // รอ animation เสร็จ (500ms) แล้วค่อย recalculate
+    setTimeout(() => {
+        recalculateLayout();
+    }, 500);
+});
+
+// Event listener สำหรับ viewport size change (iOS Safari)
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+        console.log('📱 Visual viewport resized');
+        
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            recalculateLayout();
+        }, 300);
+    });
+}
+
+console.log('✅ Layout event listeners initialized');
