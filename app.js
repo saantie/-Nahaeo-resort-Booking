@@ -1844,17 +1844,31 @@ setInterval(loadCharts, 10 * 60 * 1000);
 function recalculateLayout() {
     console.log('🔄 Recalculating layout...');
     
-    // Force reflow
+    // ========================================
+    // แก้ปัญหา Container ไม่เต็มหน้าจอ
+    // ========================================
     const container = document.querySelector('.container');
     const tableWrapper = document.querySelector('.table-wrapper');
     
     if (container) {
-        // Trigger reflow โดยการอ่าน offsetHeight
+        // Force reset width to 100%
+        container.style.width = '';
+        container.style.maxWidth = '';
+        
+        // Trigger reflow
         const height = container.offsetHeight;
         console.log('Container height:', height);
+        
+        // Force repaint
+        container.style.display = 'block';
+        container.offsetHeight;
     }
     
     if (tableWrapper) {
+        // Force reset width to 100%
+        tableWrapper.style.width = '';
+        tableWrapper.style.maxWidth = '';
+        
         // Reset scroll position
         tableWrapper.scrollLeft = 0;
         
@@ -1864,7 +1878,7 @@ function recalculateLayout() {
         
         // Force repaint
         tableWrapper.style.display = 'none';
-        tableWrapper.offsetHeight; // Trigger reflow
+        tableWrapper.offsetHeight;
         tableWrapper.style.display = 'block';
     }
     
