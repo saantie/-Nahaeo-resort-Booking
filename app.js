@@ -168,17 +168,15 @@ function parseDate(dateStr) {
 
 // Format date to Thai format - แสดงเฉพาะวันและวันที่
 function formatDateThai(date) {
-    const days = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
-    
-    return `${days[date.getDay()]} ${date.getDate()}`;
+    const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 
+                    'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    return `${date.getDate()}-${months[date.getMonth()]}`;
 }
 
-// ฟังก์ชันทางเลือก - ถ้าต้องการแสดงเดือนด้วย (ไม่แสดงปี)
+// ฟังก์ชันเดิม - แสดงแค่วันอาทิตย์และวันที่
 // function formatDateThai(date) {
 //     const days = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
-//     const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 
-//                     'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-//     return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
+//     return `${days[date.getDay()]} ${date.getDate()}`;
 // }
 
 // Fetch data from Google Sheets
@@ -426,6 +424,28 @@ function isDateInBooking(date, checkIn, checkOut) {
     return isInRange;
 }
 
+// นับจำนวนบ้านที่มีการจองในวันที่ที่กำหนด
+function countHousesBookedOnDate(date, bookings) {
+    const bookedHouses = new Set(); // ใช้ Set เพื่อหาบ้านที่ไม่ซ้ำกัน
+    
+    bookings.forEach(booking => {
+        // เช็คว่าวันที่นี้อยู่ในช่วงการจอง
+        if (isDateInBooking(date, booking['Date_ck_in'], booking['Date_ck_out'])) {
+            // ดึงชื่อบ้านจาก House_bk
+            const houseBk = booking['House_bk'] || '';
+            
+            // หาบ้านทั้งหมดที่ถูกจองในการจองนี้
+            HOUSE_NAMES.forEach(houseName => {
+                if (houseBk.includes(houseName)) {
+                    bookedHouses.add(houseName);
+                }
+            });
+        }
+    });
+    
+    return bookedHouses.size;
+}
+
 // Build booking table with pagination
 function buildBookingTable(sheetData, page = 1) {
     console.log(`📊 Building booking table for page ${page}...`);
@@ -543,8 +563,38 @@ function buildBookingTable(sheetData, page = 1) {
     // Body rows
     pageDates.forEach((date, idx) => {
         const isToday = date.getTime() === today.getTime();
+        
+        // นับจำนวนบ้านที่มีการจองในวันนี้
+        const bookedHousesCount = countHousesBookedOnDate(date, bookingsWithHouse);
+        
+        // สร้าง badge แสดงจำนวนบ้าน
+        let dateBadge = '';
+        if (bookedHousesCount > 0) {
+            const badgeColor = bookedHousesCount >= 10 ? '#dc2626' : 
+                              bookedHousesCount >= 5 ? '#ea580c' : 
+                              '#059669';
+            dateBadge = `
+                <div style="
+                    margin-top: 4px; 
+                    padding: 3px 8px; 
+                    background: ${badgeColor}; 
+                    color: white; 
+                    border-radius: 12px; 
+                    font-size: 11px; 
+                    font-weight: 600;
+                    display: inline-block;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+                ">
+                    มีจอง ${bookedHousesCount} หลัง
+                </div>
+            `;
+        }
+        
         let row = '<tr>';
-        row += `<td class="date-cell ${isToday ? 'today-row' : ''}">${formatDateThai(date)}</td>`;
+        row += `<td class="date-cell ${isToday ? 'today-row' : ''}">
+            ${formatDateThai(date)}
+            ${dateBadge}
+        </td>`;
         
         // Check each house for bookings on this date
         HOUSE_NAMES.forEach((houseName, houseIdx) => {
