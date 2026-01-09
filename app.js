@@ -1882,21 +1882,6 @@ function recalculateLayout() {
         tableWrapper.style.display = 'none';
         tableWrapper.offsetHeight;
         tableWrapper.style.display = 'block';
-        
-        // ⭐ บังคับให้ตารางรีเฟรชค่าความกว้างใหม่ (ตามคำแนะนำในเอกสาร)
-        const table = tableWrapper.querySelector('table');
-        if (table) {
-            // Reset table width
-            table.style.width = '';
-            table.offsetWidth; // Trigger reflow
-            table.style.width = '100%';
-            
-            // Force redraw
-            table.style.display = 'table';
-            table.offsetHeight;
-            
-            console.log('✅ Table refreshed');
-        }
     }
     
     if (chartsGrid) {
