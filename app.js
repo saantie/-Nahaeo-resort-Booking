@@ -1014,9 +1014,10 @@ setInterval(loadData, 5 * 60 * 1000);
 // ========== CHARTS FUNCTIONALITY ==========
 
 // Chart instances
-let monthlyRevenueChart = null;
-let yearlyRevenueChart = null;
-let bookingCountChart = null;
+// Global chart instances
+window.monthlyRevenueChart = null;
+window.yearlyRevenueChart = null;
+window.bookingCountChart = null;
 
 // Fetch revenue data
 async function fetchRevenueData() {
@@ -1076,8 +1077,8 @@ function createMonthlyRevenueChart(data) {
     if (!ctx) return;
     
     // ถ้ามี chart อยู่แล้ว ให้ destroy ก่อน
-    if (monthlyRevenueChart) {
-        monthlyRevenueChart.destroy();
+    if (window.monthlyRevenueChart) {
+        window.monthlyRevenueChart.destroy();
     }
     
     const monthNames = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 
@@ -1149,7 +1150,7 @@ function createMonthlyRevenueChart(data) {
         ];
     }
     
-    monthlyRevenueChart = new Chart(ctx, {
+    window.monthlyRevenueChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: monthNames,
@@ -1199,8 +1200,8 @@ function createYearlyRevenueChart(data) {
     const ctx = document.getElementById('yearlyRevenueChart');
     if (!ctx) return;
     
-    if (yearlyRevenueChart) {
-        yearlyRevenueChart.destroy();
+    if (window.yearlyRevenueChart) {
+        window.yearlyRevenueChart.destroy();
     }
     
     // ดึงรายได้แต่ละปีจากคอลัมน์ "รวม"
@@ -1231,7 +1232,7 @@ function createYearlyRevenueChart(data) {
         }
     });
     
-    yearlyRevenueChart = new Chart(ctx, {
+    window.yearlyRevenueChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: years,
@@ -1287,8 +1288,8 @@ function createBookingCountChart(data) {
     const ctx = document.getElementById('bookingCountChart');
     if (!ctx) return;
     
-    if (bookingCountChart) {
-        bookingCountChart.destroy();
+    if (window.bookingCountChart) {
+        window.bookingCountChart.destroy();
     }
     
     // ชื่อบ้านทั้งหมด (15 หลัง)
@@ -1327,7 +1328,7 @@ function createBookingCountChart(data) {
         'rgba(255, 132, 206, 0.7)'
     ];
     
-    bookingCountChart = new Chart(ctx, {
+    window.bookingCountChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: houseNames,
@@ -1875,9 +1876,9 @@ function recalculateLayout() {
     
     // รายการ chart instances ทั้งหมด
     const chartInstances = [
-        { name: 'Monthly Revenue', instance: window.monthlyRevenueChartInstance },
-        { name: 'Year Comparison', instance: window.yearComparisonChartInstance },
-        { name: 'Booking Count', instance: window.bookingCountChartInstance },
+        { name: 'Monthly Revenue', instance: window.monthlyRevenueChart },
+        { name: 'Yearly Revenue', instance: window.yearlyRevenueChart },
+        { name: 'Booking Count', instance: window.bookingCountChart },
         { name: 'Booking by Year', instance: window.bookingCountByYearChartInstance },
         { name: 'Revenue by Year', instance: window.revenueByYearChartInstance }
     ];
