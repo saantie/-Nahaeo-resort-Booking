@@ -1182,6 +1182,16 @@ function createMonthlyRevenueChart(data) {
                 }
             },
             scales: {
+                x: {
+                    ticks: {
+                        autoSkip: true,      // เปิด auto skip
+                        maxRotation: 45,     // หมุนได้สูงสุด 45 องศา
+                        minRotation: 0,      // ไม่หมุนถ้าพอ
+                        font: {
+                            size: 11
+                        }
+                    }
+                },
                 y: {
                     beginAtZero: true,
                     ticks: {
@@ -1270,6 +1280,16 @@ function createYearlyRevenueChart(data) {
                 }
             },
             scales: {
+                x: {
+                    ticks: {
+                        autoSkip: true,      // เปิด auto skip
+                        maxRotation: 0,      // ไม่หมุน (เพราะเป็นปี จำนวนน้อย)
+                        minRotation: 0,
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
                 y: {
                     beginAtZero: true,
                     ticks: {
@@ -1888,21 +1908,17 @@ function recalculateLayout() {
     chartInstances.forEach(chart => {
         if (chart.instance) {
             try {
-                // Method 1: ใช้ .resize()
+                // CRITICAL: ต้องเรียกทั้ง resize() และ update()
+                // - resize() = resize canvas
+                // - update() = recalculate ticks, labels, autoSkip
+                
                 chart.instance.resize();
-                console.log(`✅ Resized: ${chart.name}`);
+                chart.instance.update('none'); // 'none' = no animation
+                
+                console.log(`✅ Resized & Updated: ${chart.name}`);
                 resizedCount++;
             } catch (error) {
-                console.warn(`⚠️ Error resizing ${chart.name}:`, error);
-                
-                // Method 2: ถ้า resize ไม่ได้ ให้ใช้ .update()
-                try {
-                    chart.instance.update('none'); // 'none' = no animation
-                    console.log(`✅ Updated: ${chart.name}`);
-                    resizedCount++;
-                } catch (updateError) {
-                    console.error(`❌ Failed to resize/update ${chart.name}:`, updateError);
-                }
+                console.error(`❌ Failed to resize/update ${chart.name}:`, error);
             }
         } else {
             console.log(`⚠️ ${chart.name} instance not found`);
