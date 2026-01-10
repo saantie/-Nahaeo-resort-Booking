@@ -811,10 +811,16 @@
             position: relative;
             height: 300px;
             min-height: 250px;
+            /* เพิ่มเพื่อแก้ปัญหาหมุนหน้าจอ */
+            width: 100%;
+            max-width: 100%;
         }
 
         .chart-wrapper canvas {
             max-height: 100%;
+            /* เพิ่มเพื่อแก้ปัญหาหมุนหน้าจอ */
+            width: 100% !important;
+            height: 100% !important;
         }
 
         .chart-loading {
