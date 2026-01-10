@@ -1865,7 +1865,7 @@ setInterval(loadCharts, 10 * 60 * 1000);
 function recalculateLayout() {
     console.log('🔄 Recalculating layout...');
     
-    // Force reflow
+    // Force reflow - Main container
     const container = document.querySelector('.container');
     const tableWrapper = document.querySelector('.table-wrapper');
     
@@ -1888,6 +1888,34 @@ function recalculateLayout() {
         tableWrapper.offsetHeight; // Trigger reflow
         tableWrapper.style.display = 'block';
     }
+    
+    // ========================================
+    // Force reflow - Chart containers
+    // ========================================
+    console.log('📦 Forcing chart containers reflow...');
+    
+    // Force reflow charts-grid
+    const chartsGrid = document.querySelector('.charts-grid');
+    if (chartsGrid) {
+        const gridWidth = chartsGrid.offsetWidth;
+        console.log('Charts grid width:', gridWidth);
+    }
+    
+    // Force reflow ทุก chart-wrapper
+    const chartWrappers = document.querySelectorAll('.chart-wrapper');
+    chartWrappers.forEach((wrapper, index) => {
+        // Trigger reflow
+        const width = wrapper.offsetWidth;
+        const height = wrapper.offsetHeight;
+        console.log(`Chart wrapper ${index + 1}: ${width}x${height}`);
+        
+        // Force repaint
+        wrapper.style.display = 'none';
+        wrapper.offsetHeight; // Trigger reflow
+        wrapper.style.display = '';
+    });
+    
+    console.log(`✅ Forced reflow on ${chartWrappers.length} chart wrappers`);
     
     // ========================================
     // แก้ปัญหา Charts ยืดแล้วไม่ย่อกลับ
